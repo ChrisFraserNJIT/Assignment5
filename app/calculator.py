@@ -26,11 +26,20 @@ CalculationResult = Union[Number, str]
 class Calculator:
     """
     Main calculator class implementing multiple design patterns.
+
+    This class serves as the core of the calculator application, managing operations,
+    calculation history, observers, configuration settings, and data persistence.
+    It integrates various design patterns to enhance flexibility, maintainability, and
+    scalability.
     """
 
     def __init__(self, config: Optional[CalculatorConfig] = None):
         """
         Initialize calculator with configuration.
+
+        Args:
+            config (Optional[CalculatorConfig], optional): Configuration settings for the calculator.
+                If not provided, default settings are loaded based on environment variables.
         """
         if config is None:
             # Determine the project root directory if no configuration is provided
@@ -110,6 +119,9 @@ class Calculator:
 
         Adds an observer to the list, allowing it to receive updates when new
         calculations are performed.
+
+        Args:
+            observer (HistoryObserver): The observer to be added.
         """
         self.observers.append(observer)
         logging.info(f"Added observer: {observer.__class__.__name__}")
@@ -119,6 +131,9 @@ class Calculator:
         Remove an existing observer.
 
         Removes an observer from the list, preventing it from receiving further updates.
+
+        Args:
+            observer (HistoryObserver): The observer to be removed.
         """
         self.observers.remove(observer)
         logging.info(f"Removed observer: {observer.__class__.__name__}")
@@ -129,6 +144,9 @@ class Calculator:
 
         Iterates through the list of observers and calls their update method,
         passing the new calculation as an argument.
+
+        Args:
+            calculation (Calculation): The latest calculation performed.
         """
         for observer in self.observers:
             observer.update(calculation)
@@ -140,6 +158,9 @@ class Calculator:
         Assigns the operation strategy that will be used for performing calculations.
         This is part of the Strategy pattern, allowing the calculator to switch between
         different operation algorithms dynamically.
+
+        Args:
+            operation (Operation): The operation strategy to be set.
         """
         self.operation_strategy = operation
         logging.info(f"Set operation: {operation}")
@@ -154,6 +175,17 @@ class Calculator:
 
         Validates and sanitizes user inputs, executes the calculation using the
         current operation strategy, updates the history, and notifies observers.
+
+        Args:
+            a (Union[str, Number]): The first operand, can be a string or a numeric type.
+            b (Union[str, Number]): The second operand, can be a string or a numeric type.
+
+        Returns:
+            CalculationResult: The result of the calculation.
+
+        Raises:
+            OperationError: If no operation is set or if the operation fails.
+            ValidationError: If input validation fails.
         """
         if not self.operation_strategy:
             raise OperationError("No operation set")
@@ -203,6 +235,12 @@ class Calculator:
     def save_history(self) -> None:
         """
         Save calculation history to a CSV file using pandas.
+
+        Serializes the history of calculations and writes them to a CSV file for
+        persistent storage. Utilizes pandas DataFrames for efficient data handling.
+
+        Raises:
+            OperationError: If saving the history fails.
         """
         try:
             # Ensure the history directory exists
@@ -239,6 +277,12 @@ class Calculator:
     def load_history(self) -> None:
         """
         Load calculation history from a CSV file using pandas.
+
+        Reads the calculation history from a CSV file and reconstructs the
+        Calculation instances, restoring the calculator's history.
+
+        Raises:
+            OperationError: If loading the history fails.
         """
         try:
             if self.config.history_file.exists():
@@ -270,6 +314,12 @@ class Calculator:
     def get_history_dataframe(self) -> pd.DataFrame:
         """
         Get calculation history as a pandas DataFrame.
+
+        Converts the list of Calculation instances into a pandas DataFrame for
+        advanced data manipulation or analysis.
+
+        Returns:
+            pd.DataFrame: DataFrame containing the calculation history.
         """
         history_data = []
         for calc in self.history:
@@ -285,6 +335,11 @@ class Calculator:
     def show_history(self) -> List[str]:
         """
         Get formatted history of calculations.
+
+        Returns a list of human-readable strings representing each calculation.
+
+        Returns:
+            List[str]: List of formatted calculation history entries.
         """
         return [
             f"{calc.operation}({calc.operand1}, {calc.operand2}) = {calc.result}"
@@ -294,6 +349,8 @@ class Calculator:
     def clear_history(self) -> None:
         """
         Clear calculation history.
+
+        Empties the calculation history and clears the undo and redo stacks.
         """
         self.history.clear()
         self.undo_stack.clear()
@@ -306,6 +363,9 @@ class Calculator:
 
         Restores the calculator's history to the state before the last calculation
         was performed.
+
+        Returns:
+            bool: True if an operation was undone, False if there was nothing to undo.
         """
         if not self.undo_stack:
             return False
@@ -320,6 +380,11 @@ class Calculator:
     def redo(self) -> bool:
         """
         Redo the previously undone operation.
+
+        Restores the calculator's history to the state before the last undo.
+
+        Returns:
+            bool: True if an operation was redone, False if there was nothing to redo.
         """
         if not self.redo_stack:
             return False
@@ -330,3 +395,5 @@ class Calculator:
         # Restore the history from the memento
         self.history = memento.history.copy()
         return True
+    
+    
